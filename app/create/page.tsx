@@ -182,7 +182,7 @@ export default function CreatePage() {
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">Customize Your Quiz</h2>
                 <p className="text-stone-600 dark:text-stone-400">
-                  Review and edit the generated questions to match your needs
+                  Review and edit the generated questions to match your needs. The AI has automatically selected correct answers for each question.
                 </p>
               </div>
 

@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Trash2, Plus, Sparkles, CheckCircle2, Edit3 } from 'lucide-react';
 import { GeneratedQuestion } from '@/types/quiz';
 
 interface QuestionEditorProps {
@@ -17,11 +19,17 @@ interface QuestionEditorProps {
 
 export function QuestionEditor({ questions, onQuestionsChange }: QuestionEditorProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editedAnswers, setEditedAnswers] = useState<Set<number>>(new Set());
 
   const updateQuestion = (index: number, updates: Partial<GeneratedQuestion>) => {
     const newQuestions = [...questions];
     newQuestions[index] = { ...newQuestions[index], ...updates };
     onQuestionsChange(newQuestions);
+    
+    // Mark this answer as edited if the correct answer was changed
+    if (updates.correct !== undefined) {
+      setEditedAnswers(prev => new Set([...prev, index]));
+    }
   };
 
   const addQuestion = () => {
@@ -37,6 +45,12 @@ export function QuestionEditor({ questions, onQuestionsChange }: QuestionEditorP
   const removeQuestion = (index: number) => {
     const newQuestions = questions.filter((_, i) => i !== index);
     onQuestionsChange(newQuestions);
+    // Remove from edited answers set
+    setEditedAnswers(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(index);
+      return newSet;
+    });
   };
 
   const updateOption = (questionIndex: number, optionIndex: number, value: string) => {
@@ -57,6 +71,15 @@ export function QuestionEditor({ questions, onQuestionsChange }: QuestionEditorP
         </Button>
       </div>
 
+      {/* AI Answer Info */}
+      <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+        <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <strong>AI-Generated Answers:</strong> The AI has automatically selected the correct answers for each question. 
+          You can review and edit them as needed. Questions with edited answers are marked with a badge.
+        </AlertDescription>
+      </Alert>
+
       <div className="space-y-4">
         {questions.map((question, index) => (
           <QuestionCard
@@ -69,6 +92,7 @@ export function QuestionEditor({ questions, onQuestionsChange }: QuestionEditorP
             isEditing={editingIndex === index}
             onEdit={() => setEditingIndex(index)}
             onSave={() => setEditingIndex(null)}
+            isAnswerEdited={editedAnswers.has(index)}
           />
         ))}
       </div>
@@ -85,6 +109,7 @@ interface QuestionCardProps {
   isEditing: boolean;
   onEdit: () => void;
   onSave: () => void;
+  isAnswerEdited: boolean;
 }
 
 function QuestionCard({
@@ -96,13 +121,22 @@ function QuestionCard({
   isEditing,
   onEdit,
   onSave,
+  isAnswerEdited,
 }: QuestionCardProps) {
 
   return (
-    <Card>
+    <Card className="border-stone-200 dark:border-stone-800 bg-white/50 dark:bg-stone-900/50 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+          <div className="flex items-center gap-3">
+            <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+            {isAnswerEdited && (
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                <Edit3 className="mr-1 h-3 w-3" />
+                Edited
+              </Badge>
+            )}
+          </div>
           <div className="flex gap-2">
             {isEditing ? (
               <Button onClick={onSave} size="sm">
@@ -129,7 +163,7 @@ function QuestionCard({
               onUpdate({ type: value })
             }
           >
-            <SelectTrigger>
+            <SelectTrigger className="bg-white dark:bg-stone-950">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -148,7 +182,7 @@ function QuestionCard({
               value={question.question}
               onChange={(e) => onUpdate({ question: e.target.value })}
               placeholder="Enter your question here..."
-              className="min-h-[100px]"
+              className="min-h-[100px] bg-white dark:bg-stone-950"
             />
           ) : (
             <div className="border rounded-lg p-4 min-h-[100px] bg-muted/50">
@@ -169,6 +203,7 @@ function QuestionCard({
                     value={option}
                     onChange={(e) => onOptionUpdate(optionIndex, e.target.value)}
                     placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`}
+                    className="bg-white dark:bg-stone-950"
                   />
                 </div>
               ))}
@@ -178,13 +213,21 @@ function QuestionCard({
 
         {/* Correct Answer */}
         <div className="space-y-2">
-          <Label>Correct Answer</Label>
+          <div className="flex items-center gap-2">
+            <Label>Correct Answer</Label>
+            {!isAnswerEdited && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                AI Selected
+              </Badge>
+            )}
+          </div>
           {question.type === 'multiple_choice' ? (
             <Select
               value={question.correct || ""}
               onValueChange={(value) => onUpdate({ correct: value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white dark:bg-stone-950">
                 <SelectValue placeholder="Select correct answer" />
               </SelectTrigger>
               <SelectContent>
@@ -200,7 +243,7 @@ function QuestionCard({
               value={question.correct || ""}
               onValueChange={(value) => onUpdate({ correct: value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white dark:bg-stone-950">
                 <SelectValue placeholder="Select correct answer" />
               </SelectTrigger>
               <SelectContent>
@@ -214,6 +257,7 @@ function QuestionCard({
               onChange={(e) => onUpdate({ correct: e.target.value })}
               placeholder="Enter the correct answer"
               rows={2}
+              className="bg-white dark:bg-stone-950"
             />
           )}
         </div>

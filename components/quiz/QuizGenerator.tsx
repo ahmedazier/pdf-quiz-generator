@@ -320,6 +320,14 @@ export function QuizGenerator({ onQuizGenerated }: QuizGeneratorProps) {
               rows={3}
               className="bg-white dark:bg-stone-950"
             />
+            <div className="text-xs text-stone-500 dark:text-stone-400 bg-stone-50 dark:bg-stone-900/50 p-3 rounded-lg border border-stone-200 dark:border-stone-700">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-3 w-3 mt-0.5 text-stone-400" />
+                <div>
+                  <strong>AI Answer Selection:</strong> The AI will automatically choose the correct answer for each question based on the content. You can review and edit these answers in the next step.
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Progress */}
